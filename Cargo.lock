@@ -363,6 +363,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytemuck",
+ "byteorder",
  "image",
  "reed-solomon",
  "wasm-bindgen",
