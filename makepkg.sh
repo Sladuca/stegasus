@@ -6,4 +6,4 @@ then
 fi
 
 wasm-pack build
-cd pkg && npm link stegasus && cd ..
+cd pkg && npm link && cd ..
