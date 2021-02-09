@@ -1,10 +1,17 @@
-use wasm_bindgen::prelude::*;
+// use wasm_bindgen::prelude::console_error_panic_hook;
+// extern crate console_error_panic_hook;
+// use std::panic;
+
+#[no_mangle]
+pub extern "C" fn add(x: i32, y: i32) -> i32 {
+    x + y
+}
 
 use anyhow::{anyhow, Error};
 use byteorder::{ByteOrder, LittleEndian};
-use image::io::Reader;
+use image::{EncodableLayout, io::Reader};
 use image::{DynamicImage, ImageFormat};
-use std::io::Cursor;
+use std::{io::Cursor, vec};
 
 const ECC_BLOCK_LEN: usize = 255;
 // use reed-solomon ECC with k = 32, max 16 bytes corrected
@@ -13,19 +20,26 @@ const ECC_CODE_LEN: usize = 32;
 const ECC_DATA_LEN: usize = ECC_BLOCK_LEN - 32;
 const USIZE_SIZE: usize = 8;
 
-#[wasm_bindgen]
-pub fn encode_img(carrier: &[u8], input: &[u8]) -> Vec<u8> {
-    console_error_panic_hook::set_once();
-    encode_img_inner(carrier, input).unwrap()
+#[no_mangle]
+pub extern "C" fn encode_img(carrier: &str, input: &str) -> *const u8 {
+    // console_error_panic_hook::set_once();
+    // 12
+    let ret = encode_img_inner(carrier.as_bytes(), input.as_bytes());
+    let ret_str = match ret {
+        Ok(res) => res, // String::from_utf8_lossy(&res.as_bytes()).to_owned().to_string(),
+        Err(e) =>  format!("Res {:?}", e).as_bytes().to_vec()
+    };
+    ret_str.as_ptr()
+    // ret_str.into_ra
 }
 
-#[wasm_bindgen]
-pub fn decode_img(img: &[u8]) -> Vec<u8> {
-    console_error_panic_hook::set_once();
-    decode_img_inner(img).unwrap()
-}
+// #[no_mangle]
+// pub extern "C" fn decode_img(img: &[u8]) -> Vec<u8> {
+//     console_error_panic_hook::set_once();
+//     decode_img_inner(img).unwrap()
+// }
 
-pub fn encode_img_inner(carrier: &[u8], input: &[u8]) -> Result<Vec<u8>, Error> {
+fn encode_img_inner(carrier: &[u8], input: &[u8]) -> Result<Vec<u8>, Error> {
     let img = Reader::with_format(Cursor::new(carrier), ImageFormat::Png)
         .decode()
         .map_err(|e| anyhow!(e))?;
@@ -74,7 +88,7 @@ pub fn encode_img_inner(carrier: &[u8], input: &[u8]) -> Result<Vec<u8>, Error> 
     Ok(buf)
 }
 
-pub fn decode_img_inner(img: &[u8]) -> Result<Vec<u8>, Error> {
+fn decode_img_inner(img: &[u8]) -> Result<Vec<u8>, Error> {
     let img = Reader::with_format(Cursor::new(img), ImageFormat::Png)
         .decode()
         .map_err(|e| anyhow!(e))?;
@@ -163,7 +177,7 @@ fn decode_ecc(blocks: Vec<Vec<u8>>) -> Result<Vec<u8>, Error> {
     }
     Ok(buf)
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use super::{decode_img_inner, encode_img_inner};
@@ -208,3 +222,5 @@ mod tests {
         test_sporkmarmot(&data[..], None);
     }
 }
+
+*/
